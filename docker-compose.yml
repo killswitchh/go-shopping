@@ -1,0 +1,55 @@
+version: '3'
+services:
+    db:
+      image: postgres:14.1-alpine
+      container_name: 'go-docker_db'
+      restart: always
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+      ports:
+        - '5432:5432'
+      volumes: 
+        - db:/var/lib/postgresql/data
+      networks:
+        - go-docker-net
+    api-order-service:
+      image: go-docker-image:latest #Our go-docker image here
+      container_name: 'go-docker_api-order-service'
+      ports:
+          - '3000:3000'
+      volumes:
+          - ./order-service/:/go/src/app/
+          - ./order-service/go.mod:/go/src/app/go.mod
+      restart: always
+      networks:
+          - go-docker-net
+    api-notification-service:
+      image: go-docker-image:latest #Our go-docker image here
+      container_name: 'go-docker_api-notification-service'
+      ports:
+          - '3001:3001'
+      volumes:
+          - ./notification-service/:/go/src/app/
+          - ./notification-service/go.mod:/go/src/app/go.mod
+      restart: always
+      networks:
+          - go-docker-net
+    redis:
+      image: redis:6.2-alpine
+      restart: always
+      ports:
+        - '6379:6379'
+      command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+      volumes: 
+        - cache:/data
+      networks:
+        - go-docker-net
+networks:
+  go-docker-net:
+    driver: bridge
+volumes:
+  cache:
+    driver: local
+  db:
+    driver: local
