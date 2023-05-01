@@ -4,6 +4,11 @@ services:
       image: postgres:14.1-alpine
       container_name: 'go-docker_db'
       restart: always
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
       environment:
         - POSTGRES_USER=postgres
         - POSTGRES_PASSWORD=postgres
@@ -22,6 +27,9 @@ services:
           - ./order-service/:/go/src/app/
           - ./order-service/go.mod:/go/src/app/go.mod
       restart: always
+      depends_on:
+        db:
+          condition: service_healthy
       networks:
           - go-docker-net
     api-notification-service:
@@ -33,20 +41,31 @@ services:
           - ./notification-service/:/go/src/app/
           - ./notification-service/go.mod:/go/src/app/go.mod
       restart: always
+      depends_on:
+        db:
+          condition: service_healthy
       networks:
           - go-docker-net
-    redis:
-      image: redis:6.2-alpine
-      restart: always
+    rabbitmq:
+      image: rabbitmq:3-management-alpine
+      container_name: 'rabbitmq'
       ports:
-        - '6379:6379'
-      command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
-      volumes: 
-        - cache:/data
+          - 5672:5672
+          - 15672:15672
+      volumes:
+          - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+          - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:15672"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
       networks:
-        - go-docker-net
+          - rabbitmq_go_net
 networks:
   go-docker-net:
+    driver: bridge
+  rabbitmq_go_net:
     driver: bridge
 volumes:
   cache:
