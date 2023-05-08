@@ -1,74 +1,47 @@
-version: '3'
+version: "3.9"
 services:
-    db:
-      image: postgres:14.1-alpine
-      container_name: 'go-docker_db'
-      restart: always
-      healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U postgres"]
-        interval: 5s
-        timeout: 5s
-        retries: 5
-      environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=postgres
-      ports:
-        - '5432:5432'
-      volumes: 
-        - db:/var/lib/postgresql/data
-      networks:
-        - go-docker-net
-    api-order-service:
-      image: go-docker-image:latest #Our go-docker image here
-      container_name: 'go-docker_api-order-service'
-      ports:
-          - '3000:3000'
-      volumes:
-          - ./order-service/:/go/src/app/
-          - ./order-service/go.mod:/go/src/app/go.mod
-      restart: always
-      depends_on:
-        db:
-          condition: service_healthy
-      networks:
-          - go-docker-net
-    api-notification-service:
-      image: go-docker-image:latest #Our go-docker image here
-      container_name: 'go-docker_api-notification-service'
-      ports:
-          - '3001:3001'
-      volumes:
-          - ./notification-service/:/go/src/app/
-          - ./notification-service/go.mod:/go/src/app/go.mod
-      restart: always
-      depends_on:
-        db:
-          condition: service_healthy
-      networks:
-          - go-docker-net
-    rabbitmq:
-      image: rabbitmq:3-management-alpine
-      container_name: 'rabbitmq'
-      ports:
-          - 5672:5672
-          - 15672:15672
-      volumes:
-          - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-          - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
-      healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:15672"]
-        interval: 30s
-        timeout: 10s
-        retries: 5
-      networks:
-          - rabbitmq_go_net
+  rabbitmq:
+    image: 'rabbitmq:3-management'
+    container_name: 'rabbitmq'
+    ports:
+      - "8080:15672"
+      - "5000:5673"
+    volumes:
+      - ./rabbit-mq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 15s
+      retries: 5
+    networks:
+        - dev-network
+  producer:
+    build: ./order-service
+    ports:
+      - "5050:5050" 
+    networks:
+        - dev-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment: 
+      GIN_MODE: "release"
+      GIN_HTTPS: "false"
+      GIN_ADDR: "0.0.0.0"
+      GIN_PORT: "5050"
+      LOG_LEVEL: "debug"
+      RMQ_URL: "amqp://guest:guest@rabbitmq:5673/"
+  consumer:
+    build: ./notification-service
+    networks:
+        - dev-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
+    environment: # Sample env variables for consumer
+      LOG_LEVEL: "debug"
+      RMQ_URL: "amqp://guest:guest@rabbitmq:5673/"
 networks:
-  go-docker-net:
+  dev-network:
     driver: bridge
-  rabbitmq_go_net:
-    driver: bridge
-volumes:
-  cache:
-    driver: local
-  db:
-    driver: local
