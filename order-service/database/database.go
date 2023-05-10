@@ -33,15 +33,15 @@ func ConnectDb() {
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		log.Fatal("Failed to connect to the Database")
+		log.Fatalf("Failed to connect to the Database %s", dsn)
 	}
 	fmt.Println("? Connected Successfully to the Database")
 	if err != nil {
-		log.Fatal("Failed to connect to database. \n", err)
+		log.Fatalf("Failed to connect to database.  %s", dsn)
 		os.Exit(2)
 	}
 
-	log.Println("connected")
+	log.Printf("connected %s", dsn)
 	db.Logger = logger.Default.LogMode(logger.Info)
 
 	log.Println("running migrations")

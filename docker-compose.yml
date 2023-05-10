@@ -13,9 +13,6 @@ services:
       interval: 5s
       timeout: 15s
       retries: 5
-    networks:
-      - dev-network
-
   database:
     image: postgres
     container_name: 'go-docker_db'
@@ -33,45 +30,47 @@ services:
       - POSTGRES_DB=${DB_NAME}
     ports:
       - '5432:5432'
-    networks:
-      - dev-network
     volumes:
       - postgres-db:/var/lib/postgresql/data
   producer:
     container_name: 'order-service'
     build: ./order-service
     ports:
-      - "5050:5050" 
-    networks:
-        - dev-network
+      - "5050:5050"
     volumes:
       - .:/usr/src/order-service
-    command: go run ./order-service/main.go -b 0.0.0.0
+    command: go run main.go
     depends_on:
       rabbitmq:
         condition: service_healthy
-    environment: 
+      database:
+        condition: service_healthy
+    environment:
       GIN_MODE: "release"
       GIN_HTTPS: "false"
       GIN_ADDR: "0.0.0.0"
       GIN_PORT: "5050"
       LOG_LEVEL: "debug"
       RMQ_URL: "amqp://guest:guest@rabbitmq:5673/"
+      POSTGRES_HOST: database
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_NAME: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_URL: "postgresql://postgres:postgres@postgres:5432?sslmode=disable"
   consumer:
     container_name: 'notification-service'
     build: ./notification-service
-    networks:
-        - dev-network
     depends_on:
       rabbitmq:
         condition: service_healthy
+      database:
+        condition: service_healthy
     restart: on-failure
-    environment: # Sample env variables for consumer
+    environment:
+      # Sample env variables for consumer
       LOG_LEVEL: "debug"
       RMQ_URL: "amqp://guest:guest@rabbitmq:5673/"
-networks:
-  dev-network:
-    driver: bridge
 
 volumes:
   postgres-db:

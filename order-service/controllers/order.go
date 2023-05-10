@@ -28,8 +28,8 @@ func CreateOrder(c *gin.Context) {
 func PublishOrder(msg models.Order) {
 	connectionString := utils.GetEnvVar("RMQ_URL")
 	rmqProducer := utils.RMQProducer{
-		consts.ORDER_QUEUE,
-		connectionString,
+		Queue: consts.ORDER_QUEUE,
+		ConnectionString: connectionString,
 	}
 	fmt.Printf("PRODUCER: %+v", rmqProducer)
 
