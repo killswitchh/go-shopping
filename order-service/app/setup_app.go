@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+
 func SetupApp() *gin.Engine {
 	log.Info().Msg("Initializing service")
 	app := gin.New()

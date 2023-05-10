@@ -37,10 +37,10 @@ func (x RMQProducer) PublishMessage(contentType string, body []byte) {
 	x.OnError(err, "Failed to declare a queue")
 
 	err = ch.Publish(
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
+		"", // exchange
+		q.Name,   // routing key
+		false,    // mandatory
+		false,    // immediate
 		amqp.Publishing{
 			ContentType: contentType,
 			Body:        body,

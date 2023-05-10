@@ -15,7 +15,6 @@ func Example(c *gin.Context) {
 
 	request_id := c.GetString("x-request-id")
 
-	// Bind request payload with our model
 	if binderr := c.ShouldBindJSON(&msg); binderr != nil {
 
 		log.Error().Err(binderr).Str("request_id", request_id).

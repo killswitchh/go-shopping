@@ -9,18 +9,44 @@ services:
     volumes:
       - ./rabbit-mq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     healthcheck:
-      test: [ "CMD", "rabbitmqctl", "status"]
+      test: [ "CMD", "rabbitmqctl", "status" ]
       interval: 5s
       timeout: 15s
       retries: 5
     networks:
-        - dev-network
+      - dev-network
+
+  database:
+    image: postgres
+    container_name: 'go-docker_db'
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - '5432:5432'
+    networks:
+      - dev-network
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
   producer:
+    container_name: 'order-service'
     build: ./order-service
     ports:
       - "5050:5050" 
     networks:
         - dev-network
+    volumes:
+      - .:/usr/src/order-service
+    command: go run ./order-service/main.go -b 0.0.0.0
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -32,6 +58,7 @@ services:
       LOG_LEVEL: "debug"
       RMQ_URL: "amqp://guest:guest@rabbitmq:5673/"
   consumer:
+    container_name: 'notification-service'
     build: ./notification-service
     networks:
         - dev-network
@@ -45,3 +72,6 @@ services:
 networks:
   dev-network:
     driver: bridge
+
+volumes:
+  postgres-db:

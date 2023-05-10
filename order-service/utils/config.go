@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"fmt"
 	"go-order-service/consts"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -22,6 +24,7 @@ func GetEnvVar(name string) string {
 		log.Debug().Msgf("Environment variable %s is not set", name)
 		return ""
 	}
+	fmt.Printf("Environment variable %s retrieved %s\n", name, viper.GetString(name))
 	value := viper.GetString(name)
 	return value
 }

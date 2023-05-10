@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"go-order-service/consts"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -31,7 +32,7 @@ func init() {
 		log.Logger = log.With().Str("host", host).Logger()
 	}
 
-	log.Logger = log.With().Str("service", "rabbitmq-producer").Logger()
+	log.Logger = log.With().Str("service", consts.SERVICE).Logger()
 
 	log.Logger = log.With().Caller().Logger()
 }

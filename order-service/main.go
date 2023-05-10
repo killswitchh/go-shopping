@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"go-order-service/app"
+	"go-order-service/consts"
+	"go-order-service/database"
 	"go-order-service/utils"
 
 	"github.com/gin-gonic/gin"
@@ -15,20 +17,20 @@ func init() {
 	gin.SetMode(mode)
 }
 
-
 func main() {
 	// Setup the app
 	app := app.SetupApp()
 
 	// Read ADDR and port
-	addr := utils.GetEnvVar("GIN_ADDR")
-	port := utils.GetEnvVar("GIN_PORT")
+	addr := utils.GetEnvVar(consts.GIN_ADDR)
+	port := utils.GetEnvVar(consts.GIN_PORT)
+	https := utils.GetEnvVar(consts.GIN_HTTPS)
+	database.ConnectDb()
 
-	https := utils.GetEnvVar("GIN_HTTPS")
 	// HTTPS mode
 	if https == "true" {
-		certFile := utils.GetEnvVar("GIN_CERT")
-		certKey := utils.GetEnvVar("GIN_CERT_KEY")
+		certFile := utils.GetEnvVar(consts.GIN_CERT)
+		certKey := utils.GetEnvVar(consts.GIN_CERT_KEY)
 		log.Info().Msgf("Starting service on https//:%s:%s", addr, port)
 
 		if err := app.RunTLS(fmt.Sprintf("%s:%s", addr, port), certFile, certKey); err != nil {
@@ -36,7 +38,7 @@ func main() {
 		}
 	}
 	// HTTP mode
-	log.Info().Msgf("Starting service on http//:%s:%s", addr, port)
+	log.Info().Msgf("Starting order-service on http//:%s:%s", addr, port)
 	if err := app.Run(fmt.Sprintf("%s:%s", addr, port)); err != nil {
 		log.Fatal().Err(err).Msg("Error occurred while setting up the server")
 	}
