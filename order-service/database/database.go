@@ -19,9 +19,9 @@ type Dbinstance struct {
 var DB Dbinstance
 
 func ConnectDb() {
-
+	fmt.Println(utils.GetEnvVar("POSTGRES_HOST"))
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai",
+		"host=%s user=%s password=%s dbname=%s port=%s",
 		utils.GetEnvVar("POSTGRES_HOST"),
 		utils.GetEnvVar("POSTGRES_USER"),
 		utils.GetEnvVar("POSTGRES_PASSWORD"),

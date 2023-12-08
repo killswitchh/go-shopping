@@ -40,5 +40,5 @@ func PublishOrder(msg models.Order) {
 		return
 	}
 	fmt.Printf("JSONIFY: %+v", jsonify)
-	rmqProducer.PublishMessage("text/plain", jsonify)
+	rmqProducer.PublishMessage("application/json", jsonify)
 }
